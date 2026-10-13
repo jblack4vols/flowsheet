@@ -115,21 +115,26 @@ Since the project uses **Vite + React**, the natural choice is:
 
 | Location | Issue | Severity |
 |----------|-------|----------|
-| `supabase.js:61` | `insertAuditEntry()` does not `throw` on error (unlike every other function). Audit failures are silently swallowed. | Medium |
-| `App.jsx:79` | `handleStatusChange` matches on `patient_id` but `updatePatientStatus` uses `id`. If `id !== patient_id`, the DB update targets a different row than the UI update. | High |
-| `App.jsx:91` | `handleAddVisit` appends to visits with `[...visits, newVisit]` but visits are ordered `descending` by date from the DB. New visit goes to end instead of beginning. | Low |
-| `VisitModal.jsx:40` | `hr` is parsed with `parseInt` but no `radix` parameter. Works in practice but flagged by linters. | Low |
-| `Dashboard.jsx:34-37` | Week calculation uses `setDate(getDate() - 7)` which can cross month boundaries incorrectly in edge cases. | Low |
+| `insertAuditEntry()` in `supabase.js` | Does not `throw` on error (unlike every other function). Audit failures are silently swallowed. | Medium |
+| `handleStatusChange()` / `updatePatientStatus()` in `App.jsx` and `supabase.js` | `handleStatusChange` matches on `patient_id` but `updatePatientStatus` filters on `id`. If `id !== patient_id`, the DB update targets a different row than the UI update. | **High** |
+| `handleAddVisit()` in `App.jsx` | Appends new visit with `[...visits, newVisit]` but visits are ordered descending by date from the DB. New visit goes to end instead of beginning. | Low |
+| `handleSave()` in `VisitModal.jsx` | `hr` is parsed with `parseInt` but no radix parameter. Works in practice but flagged by linters. | Low |
+| `Dashboard.jsx` week calculation | Uses `setDate(getDate() - 7)` which can cross month boundaries incorrectly in edge cases. | Low |
 
 ---
 
 ## Suggested Implementation Order
 
 1. **Set up Vitest + React Testing Library** (add deps, config, `test` script)
-2. **Test `supabase.js`** — mock the Supabase client, verify query building and error handling
-3. **Test `AuthContext.jsx`** — mock Supabase auth, verify session lifecycle
-4. **Test `PatientsList.jsx`** — pure filtering/pagination logic, no mocking needed
-5. **Test `VisitModal.jsx`** — form validation and data construction
-6. **Test `Dashboard.jsx`** — stat computation with mock data
-7. **Test `App.jsx`** — integration-level tests with all mocked dependencies
-8. **Add coverage thresholds** and a CI pipeline to enforce them
+2. **Fix High and Medium severity bugs** — unify `patient_id`/`id` usage in `updatePatientStatus` and add error handling to `insertAuditEntry`. These should not remain in production while the test suite is built out.
+3. **Test `supabase.js`** — mock the Supabase client, verify query building and error handling
+4. **Test `AuthContext.jsx`** — mock Supabase auth, verify session lifecycle
+5. **Test `PatientsList.jsx`** — pure filtering/pagination logic, no mocking needed
+6. **Test `VisitModal.jsx`** — form validation and data construction
+7. **Test `Dashboard.jsx`** — stat computation with mock data
+8. **Test `App.jsx`** — integration-level tests with all mocked dependencies
+9. **Add coverage thresholds and CI enforcement**
+   - Initial target: 50% line coverage (after steps 3–6, covering critical modules)
+   - Incremental goal: 70% line coverage (after step 7–8, adding integration tests)
+   - Final target: 80% line coverage, 70% branch coverage
+   - Thresholds enforced by CI — builds fail if coverage drops below the current milestone
