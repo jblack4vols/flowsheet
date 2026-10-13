@@ -50,7 +50,7 @@ Since the project uses **Vite + React**, the natural choice is:
 #### 3. `src/App.jsx` — State Management & Data Flow
 - **Why:** Orchestrates all data loading, status changes, and visit insertion with complex state updates.
 - **What to test:**
-  - `handleStatusChange()` — optimistic update uses `patient_id` (not `id`) to match, audit entry fires
+  - `handleStatusChange()` — UI state update matches on `patient_id` but the DB schema uses `id` as the patients PK (no `patient_id` column on patients); test should assert matching by `id` after a successful DB update
   - `handleAddVisit()` — visit appended to state, patient's `last_visit` updated, `selectedPatient` synced
   - `loadData()` — error state set on failure, loading state managed correctly
   - Navigation gating: admin-only pages (audit log, settings) not rendered for non-admins
@@ -90,12 +90,13 @@ Since the project uses **Vite + React**, the natural choice is:
   - Chart hidden when specific clinic selected (not "All Clinics")
 - **Risk if untested:** Incorrect dashboard numbers misleading clinical staff
 
-#### 7. `src/components/StatusBadge.jsx` & `StatusToggle.jsx` — Simple Components
-- **Why:** Low complexity but good candidates for snapshot or render tests.
+#### 7. `src/components/StatusBadge.jsx` & `StatusToggle.jsx` — Simple Components + Integration Gap
+- **Why:** Low complexity individually, but `StatusToggle` is not imported or rendered anywhere in the app. `PatientsList` accepts an `onStatusChange` prop but never calls it. The status-editing feature is currently disconnected.
 - **What to test:**
   - StatusBadge renders correct color/text for each status value
   - StatusToggle calls `onChange` with correct value
-- **Risk if untested:** Low — visual/cosmetic issues only
+  - Integration: verify `StatusToggle` is wired into `PatientsList` so the `onStatusChange` prop is actually invoked (this requires a code fix first)
+- **Risk if untested:** Medium — the status-change feature silently does nothing from the patient list
 
 ### Priority 4 — Recommended Additions
 
@@ -116,9 +117,9 @@ Since the project uses **Vite + React**, the natural choice is:
 | Location | Issue | Severity |
 |----------|-------|----------|
 | `insertAuditEntry()` in `supabase.js` | Does not `throw` on error (unlike every other function). Audit failures are silently swallowed. | Medium |
-| `handleStatusChange()` / `updatePatientStatus()` in `App.jsx` and `supabase.js` | `handleStatusChange` matches on `patient_id` but `updatePatientStatus` filters on `id`. If `id !== patient_id`, the DB update targets a different row than the UI update. | **High** |
+| `handleStatusChange()` in `App.jsx` | The patients table PK is `id` (UUID), but the frontend references `patient_id` throughout (`PatientsList`, `PatientDetail`, `App.jsx`). The patients table has no `patient_id` column — `patient_id` only exists on the `visits` table as a FK. The UI state update and DB update use different identifiers. | **High** |
 | `handleAddVisit()` in `App.jsx` | Appends new visit with `[...visits, newVisit]` but visits are ordered descending by date from the DB. New visit goes to end instead of beginning. | Low |
-| `handleSave()` in `VisitModal.jsx` | `hr` is parsed with `parseInt` but no radix parameter. Works in practice but flagged by linters. | Low |
+| `handleSave()` in `VisitModal.jsx` | `hr` is parsed with `parseInt` which silently truncates decimal input (e.g., `"72.5"` → `72`) and misparses exponent notation (e.g., `"1e2"` → `1`). Input validation should reject non-integer values before parsing. | Low |
 | `Dashboard.jsx` week calculation | Uses `setDate(getDate() - 7)` which can cross month boundaries incorrectly in edge cases. | Low |
 
 ---
@@ -126,7 +127,7 @@ Since the project uses **Vite + React**, the natural choice is:
 ## Suggested Implementation Order
 
 1. **Set up Vitest + React Testing Library** (add deps, config, `test` script)
-2. **Fix High and Medium severity bugs** — unify `patient_id`/`id` usage in `updatePatientStatus` and add error handling to `insertAuditEntry`. These should not remain in production while the test suite is built out.
+2. **Fix High and Medium severity bugs** — the frontend uses `patient_id` but the patients table PK is `id`; change the frontend to use `patient.id` consistently. Add error handling to `insertAuditEntry`. Wire `StatusToggle` into `PatientsList` so status changes actually work from the list view. These should not remain in production while the test suite is built out.
 3. **Test `supabase.js`** — mock the Supabase client, verify query building and error handling
 4. **Test `AuthContext.jsx`** — mock Supabase auth, verify session lifecycle
 5. **Test `PatientsList.jsx`** — pure filtering/pagination logic, no mocking needed
