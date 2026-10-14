@@ -75,7 +75,7 @@ export default function App() {
       await updatePatientStatus(patientId, newStatus);
       setPatients(
         patients.map((p) =>
-          p.patient_id === patientId ? { ...p, status: newStatus } : p
+          p.id === patientId ? { ...p, status: newStatus } : p
         )
       );
       await addAuditEntry('UPDATE_PATIENT_STATUS', `Patient ${patientId} status changed to ${newStatus}`);
@@ -88,10 +88,10 @@ export default function App() {
   const handleAddVisit = async (visitData) => {
     try {
       const newVisit = await insertVisit(visitData);
-      setVisits([...visits, newVisit]);
+      setVisits([newVisit, ...visits]);
 
       // Update patient's last_visit
-      const patientIndex = patients.findIndex((p) => p.patient_id === visitData.patient_id);
+      const patientIndex = patients.findIndex((p) => p.id === visitData.patient_id);
       if (patientIndex !== -1) {
         const updatedPatients = [...patients];
         updatedPatients[patientIndex].last_visit = visitData.date;

@@ -13,7 +13,7 @@ export default function PatientsList({ patients = [], onSelect, onStatusChange }
     const matchesSearch =
       p.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       p.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.patient_id.toString().includes(searchTerm);
+      p.id.toString().includes(searchTerm);
     const matchesStatus = p.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -87,14 +87,14 @@ export default function PatientsList({ patients = [], onSelect, onStatusChange }
           </thead>
           <tbody>
             {paginatedPatients.map((patient) => (
-              <tr key={patient.patient_id} className="border-b hover:bg-gray-50">
+              <tr key={patient.id} className="border-b hover:bg-gray-50">
                 <td className="px-4 py-3">
                   <div>
                     <p className="font-medium text-gray-900">
                       {patient.first_name} {patient.last_name}
                     </p>
                     <p className="text-xs text-gray-600">
-                      ID: {patient.patient_id}
+                      ID: {patient.id}
                     </p>
                   </div>
                 </td>

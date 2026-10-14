@@ -8,7 +8,7 @@ export default function PatientDetail({ patient, visits = [], onAddVisit, onBack
 
   if (!patient) return null;
 
-  const patientVisits = visits.filter((v) => v.patient_id === patient.patient_id);
+  const patientVisits = visits.filter((v) => v.patient_id === patient.id);
 
   const handleSaveVisit = (visitData) => {
     onAddVisit(visitData);
@@ -29,7 +29,7 @@ export default function PatientDetail({ patient, visits = [], onAddVisit, onBack
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
             {patient.first_name} {patient.last_name}
           </h1>
-          <p className="text-gray-600">ID: {patient.patient_id}</p>
+          <p className="text-gray-600">ID: {patient.id}</p>
         </div>
       </div>
 
