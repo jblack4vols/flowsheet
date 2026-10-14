@@ -21,7 +21,7 @@ export default function Dashboard({ patients = [], visits = [] }) {
   const filteredVisits = selectedClinic === 'All Clinics'
     ? visits
     : visits.filter((v) => {
-        const patient = patients.find((p) => p.patient_id === v.patient_id);
+        const patient = patients.find((p) => p.id === v.patient_id);
         return patient && patient.clinic === selectedClinic;
       });
 
@@ -103,7 +103,7 @@ export default function Dashboard({ patients = [], visits = [] }) {
         {filteredVisits.length > 0 ? (
           <div className="space-y-3">
             {filteredVisits.slice(0, 5).map((visit) => {
-              const patient = patients.find((p) => p.patient_id === visit.patient_id);
+              const patient = patients.find((p) => p.id === visit.patient_id);
               return (
                 <div
                   key={visit.visit_id}

@@ -58,12 +58,13 @@ export async function fetchAuditLog() {
 }
 
 export async function insertAuditEntry(userId, userEmail, action, details) {
-  await supabase.from('audit_log').insert({
+  const { error } = await supabase.from('audit_log').insert({
     user_id: userId,
     user_email: userEmail,
     action,
     details,
   });
+  if (error) throw error;
 }
 
 export async function fetchProfile(userId) {

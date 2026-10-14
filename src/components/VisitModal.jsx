@@ -33,7 +33,7 @@ export default function VisitModal({ patient, onSave, onClose }) {
     }
 
     const visitData = {
-      patient_id: patient.patient_id,
+      patient_id: patient.id,
       date,
       therapist: profile?.full_name || 'Unknown',
       bp,
